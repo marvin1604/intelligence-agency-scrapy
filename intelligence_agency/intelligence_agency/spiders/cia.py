@@ -19,14 +19,15 @@ class SpiderCia(scrapy.Spider):
     }
 
     def parse(self, response):
-        links_declassified = response.xpath('//a[starts-with(@href, "collection") and (parent::h3|parent::h2)]/@href').getall()
+        links_declassified = response.xpath('//a[starts-with(@href, "collection") and (parent::h3|parent::h2)]/@href').extract()
         for link in links_declassified:
-            yield response.follow(link, callback = self.parse_link, cb_kwargs={'url': response.urljoin(link)})
+            #para que pueda trabajar en scraping hub necesitamos cambiar cb_kwargs por meta y get y getall por extract
+            yield response.follow(link, callback = self.parse_link, meta={'url': response.urljoin(link)})
 
-    def parse_link(self, response, **kwargs):
-        link    = kwargs['url']
-        title   = response.xpath('//h1[@class="documentFirstHeading"]/text()').get()
-        body    = response.xpath('//div[@class="field-item even"]//p[not(@class)]/text()').getall()
+    def parse_link(self, response):
+        link    = response.meta['url']
+        title   = response.xpath('//h1[@class="documentFirstHeading"]/text()').extract()
+        body    = response.xpath('//div[@class="field-item even"]//p[not(@class)]/text()').extract()
 
         yield{
             'url'     : link,
